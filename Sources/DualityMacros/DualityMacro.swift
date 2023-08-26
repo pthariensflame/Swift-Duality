@@ -39,10 +39,10 @@ private func dualizeMember(_ sourceMember: MemberBlockItemSyntax) throws -> Memb
   guard sourceFunction.body == nil else {
     throw DualityMacroError.memberWithBody(member: sourceMember)
   }
-  guard !sourceFunction.modifiers.contains(where: { $0.name == "static" }) else {
+  guard sourceFunction.modifiers.contains(where: { $0.name.tokenKind == .keyword(.static) }) else {
     throw DualityMacroError.unsupportedFeature(explanation: "Instance methods")
   }
-  guard sourceFunction.modifiers.contains(where: { $0.name == "mutating" }) else {
+  guard !sourceFunction.modifiers.contains(where: { $0.name.tokenKind == .keyword(.mutating) }) else {
     throw DualityMacroError.unsupportedFeature(explanation: "Mutating methods")
   }
   let dualSignature = try dualizeFunctionSignature(sourceFunction.signature)
@@ -51,7 +51,7 @@ private func dualizeMember(_ sourceMember: MemberBlockItemSyntax) throws -> Memb
     \(sourceFunction.attributes) \(sourceFunction.modifiers)
     func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
     """
-  return MemberBlockItemSyntax(try FunctionDeclSyntax(dualFunctionSyntax))!
+  return MemberBlockItemSyntax(decl: try FunctionDeclSyntax(dualFunctionSyntax))
 }
 
 public struct DualizeMacro: PeerMacro {
