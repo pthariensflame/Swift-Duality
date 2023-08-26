@@ -28,12 +28,16 @@ private func dualize(
         let dualSignature = try dualize(functionSignature: sourceFunction.signature)
         let dualFunctionHeader: SyntaxNodeString =
             """
-            \(sourceFunction.attributes) \(sourceFunction.modifiers)
-            func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
+            \(sourceFunction.attributes)
+            \(sourceFunction.modifiers) func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
             """
         let dualFunction = if let existingMember {
             try FunctionDeclSyntax(dualFunctionHeader) {
-                FunctionCallExprSyntax(callee: existingMember) {}
+                FunctionCallExprSyntax(callee: existingMember) {
+                    for param in dualSignature.parameterClause.parameters {
+                        LabeledExprSyntax(label: param.firstName, expression: DeclReferenceExprSyntax(baseName: param.secondName ?? param.firstName))
+                    }
+                }
             }
         } else {
             try FunctionDeclSyntax(dualFunctionHeader)
@@ -45,27 +49,43 @@ private func dualize(
     }
 }
 
+private func dualize(parameterList sourceParams: FunctionParameterClauseSyntax) throws -> ReturnClauseSyntax? {
+    fatalError() // TODO:
+}
+
+private func dualize(returnValue sourceReturns: ReturnClauseSyntax?) throws -> FunctionParameterClauseSyntax {
+    fatalError() // TODO:
+}
+
 private func dualize(functionSignature sourceSignature: FunctionSignatureSyntax) throws
     -> FunctionSignatureSyntax
 {
     guard sourceSignature.effectSpecifiers == nil else {
         throw DualityMacroError.unsupportedFeature(explanation: "Effect specifiers")
     }
-    let sourceParams = sourceSignature.parameterClause.parameters
-    let sourceResult = sourceSignature.returnClause?.type
-    guard sourceParams.count <= 1 else {
-        throw DualityMacroError.unsupportedFeature(explanation: "Multiargument functions")
+    return try FunctionSignatureSyntax(
+        parameterClause: dualize(returnValue: sourceSignature.returnClause),
+        returnClause: dualize(parameterList: sourceSignature.parameterClause)
+    )
+}
+
+private func dualize(protocol sourceProtocol: ProtocolDeclSyntax) throws -> ProtocolDeclSyntax {
+    guard sourceProtocol.inheritanceClause == nil else {
+        throw DualityMacroError.unsupportedFeature(explanation: "Protocol inheritence")
     }
-    let dualParams = FunctionParameterListSyntax {
-        if let sRes = sourceResult {
-            FunctionParameterSyntax(firstName: "_", type: sRes)
+    guard sourceProtocol.primaryAssociatedTypeClause == nil else {
+        throw DualityMacroError.unsupportedFeature(explanation: "Primary associated types")
+    }
+    let dualDeclHeader: SyntaxNodeString =
+        """
+        \(sourceProtocol.attributes)
+        \(sourceProtocol.modifiers) protocol \(raw: "Co" + sourceProtocol.name.text)
+        """
+    return try ProtocolDeclSyntax(dualDeclHeader) {
+        for sourceMember in sourceProtocol.memberBlock.members {
+            try dualize(member: sourceMember)
         }
     }
-    let dualResult = sourceParams.first?.type
-    return FunctionSignatureSyntax(
-        parameterClause: FunctionParameterClauseSyntax(parameters: dualParams),
-        returnClause: dualResult.map { ReturnClauseSyntax(type: $0) }
-    )
 }
 
 public struct DualizeMacro: PeerMacro {
@@ -73,26 +93,10 @@ public struct DualizeMacro: PeerMacro {
         of node: AttributeSyntax, providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard let sourceDecl = declaration.as(ProtocolDeclSyntax.self) else {
+        guard let sourceProtocol = declaration.as(ProtocolDeclSyntax.self) else {
             throw DualityMacroError.notAProtocol(declaration: DeclSyntax(declaration))
         }
-        guard sourceDecl.inheritanceClause == nil else {
-            throw DualityMacroError.unsupportedFeature(explanation: "Protocol inheritence")
-        }
-        guard sourceDecl.primaryAssociatedTypeClause == nil else {
-            throw DualityMacroError.unsupportedFeature(explanation: "Primary associated types")
-        }
-        let dualDeclHeader: SyntaxNodeString =
-            """
-            \(sourceDecl.attributes) \(sourceDecl.modifiers)
-            protocol \(raw: "Co" + sourceDecl.name.text)
-            """
-        let dualDecl = try ProtocolDeclSyntax(dualDeclHeader) {
-            for sourceMember in sourceDecl.memberBlock.members {
-                try dualize(member: sourceMember)
-            }
-        }
-        return [DeclSyntax(dualDecl)]
+        return try [DeclSyntax(dualize(protocol: sourceProtocol))]
     }
 }
 
