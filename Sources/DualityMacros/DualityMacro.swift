@@ -32,26 +32,26 @@ private func dualizeFunctionSignature(_ sourceSignature: FunctionSignatureSyntax
 }
 
 private func dualizeMember(_ sourceMember: MemberBlockItemSyntax) throws -> MemberBlockItemSyntax {
-  if let sourceFunction = sourceMember.decl.as(FunctionDeclSyntax.self) {
-    if sourceFunction.body == nil {
-      if sourceFunction.modifiers.contains(where: { $0.name == "static" }) {
-        let dualSignature = try dualizeFunctionSignature(sourceFunction.signature)
-        let dualFunctionSyntax: SyntaxNodeString =
-          """
-          \(sourceFunction.attributes) \(sourceFunction.modifiers)
-          func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
-          """
-        return MemberBlockItemSyntax(try FunctionDeclSyntax(dualFunctionSyntax))!
-      } else {
-        throw DualityMacroError.unsupportedFeature(explanation: "Instance methods")
-      }
-    } else {
-      throw DualityMacroError.memberWithBody(member: sourceMember)
-    }
-  } else {
+  guard let sourceFunction = sourceMember.decl.as(FunctionDeclSyntax.self) else {
     throw DualityMacroError.unsupportedFeature(
       explanation: "Unsupported protocol member kind")
   }
+  guard sourceFunction.body == nil else {
+    throw DualityMacroError.memberWithBody(member: sourceMember)
+  }
+  guard !sourceFunction.modifiers.contains(where: { $0.name == "static" }) else {
+    throw DualityMacroError.unsupportedFeature(explanation: "Instance methods")
+  }
+  guard sourceFunction.modifiers.contains(where: { $0.name == "mutating" }) else {
+    throw DualityMacroError.unsupportedFeature(explanation: "Mutating methods")
+  }
+  let dualSignature = try dualizeFunctionSignature(sourceFunction.signature)
+  let dualFunctionSyntax: SyntaxNodeString =
+    """
+    \(sourceFunction.attributes) \(sourceFunction.modifiers)
+    func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
+    """
+  return MemberBlockItemSyntax(try FunctionDeclSyntax(dualFunctionSyntax))!
 }
 
 public struct DualizeMacro: PeerMacro {
