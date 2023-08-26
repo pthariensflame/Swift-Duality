@@ -35,7 +35,10 @@ private func dualize(
             try FunctionDeclSyntax(dualFunctionHeader) {
                 FunctionCallExprSyntax(callee: existingMember) {
                     for param in dualSignature.parameterClause.parameters {
-                        LabeledExprSyntax(label: param.firstName, expression: DeclReferenceExprSyntax(baseName: param.secondName ?? param.firstName))
+                        LabeledExprSyntax(
+                            label: param.firstName,
+                            expression: DeclReferenceExprSyntax(baseName: param.secondName ?? param.firstName)
+                        )
                     }
                 }
             }
