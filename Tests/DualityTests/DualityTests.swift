@@ -22,7 +22,7 @@ final class DualityTests: XCTestCase {
             expandedSource:
             """
             protocol Empty {}
-            
+
             protocol CoEmpty {
             }
             """,
@@ -41,7 +41,7 @@ final class DualityTests: XCTestCase {
             protocol Pointed {
                 static func point() -> Self
             }
-            
+
             protocol CoPointed {
                 static func copoint(_: Self) -> ()
             }
@@ -63,7 +63,7 @@ final class DualityTests: XCTestCase {
                 static func empty() -> Self
                 static func combine(left: Self, right: Self) -> Self
             }
-            
+
             protocol CoMonoid {
                 static func coempty(_: Self) -> ()
                 static func cocombine(_: Self) -> (left: Self, right: Self)
