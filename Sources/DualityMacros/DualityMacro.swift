@@ -4,6 +4,16 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+func makeInitialCaps(_ str: String) -> String {
+    let firstCharIndexStart = str.startIndex
+    let firstCharIndexEnd = str.index(after: firstCharIndexStart)
+    let firstCharIndexRange = firstCharIndexStart ..< firstCharIndexEnd
+    return str.replacingCharacters(
+        in: firstCharIndexRange,
+        with: str[firstCharIndexRange].uppercased()
+    )
+}
+
 func dualize(
     protocol sourceProtocol: ProtocolDeclSyntax,
     inContext context: some MacroExpansionContext,

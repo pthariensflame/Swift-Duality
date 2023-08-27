@@ -56,7 +56,8 @@ func dualize(
         ) else {
             return nil
         }
-        let dualFunctionName = TokenSyntax.identifier("co" + sourceFunction.name.text).with(\.leadingTrivia, " ")
+        let initialCapsFunctionNameText = makeInitialCaps(sourceFunction.name.text)
+        let dualFunctionName = TokenSyntax.identifier("co" + initialCapsFunctionNameText).with(\.leadingTrivia, " ")
         let dualFunctionHeader: SyntaxNodeString =
             "\(sourceFunction.attributes)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualFunctionName)\(dualSignature)"
         let dualFunction = try! FunctionDeclSyntax(dualFunctionHeader)

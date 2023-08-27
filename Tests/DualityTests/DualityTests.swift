@@ -43,7 +43,7 @@ final class DualityTests: XCTestCase {
             }
 
             protocol CoPointed {
-                static func copoint(_: Self) -> ()
+                static func coPoint(_: Self) -> ()
             }
             """,
             macros: testMacros
@@ -65,8 +65,8 @@ final class DualityTests: XCTestCase {
             }
 
             protocol CoMonoid {
-                static func coempty(_: Self) -> ()
-                static func cocombine(_: Self) -> (left: Self, right: Self)
+                static func coEmpty(_: Self) -> ()
+                static func coCombine(_: Self) -> (left: Self, right: Self)
             }
             """,
             macros: testMacros
@@ -86,7 +86,7 @@ final class DualityTests: XCTestCase {
             }
 
             protocol CoTape {
-                static func cosplit(left: Self, _: Int, right: Self) -> ()
+                static func coSplit(left: Self, _: Int, right: Self) -> ()
             }
             """,
             macros: testMacros
@@ -114,11 +114,11 @@ final class DualityTests: XCTestCase {
             }
 
             protocol CoRing {
-                static func cozero(_: Self) -> ()
-                static func coone(_: Self) -> ()
-                static func coadd(_: Self) -> (Self, Self)
-                static func comultiply(_: Self) -> (Self, Self)
-                static func conegate(_: Self) -> Self
+                static func coZero(_: Self) -> ()
+                static func coOne(_: Self) -> ()
+                static func coAdd(_: Self) -> (Self, Self)
+                static func coMultiply(_: Self) -> (Self, Self)
+                static func coNegate(_: Self) -> Self
             }
             """,
             macros: testMacros
@@ -130,6 +130,7 @@ final class DualityTests: XCTestCase {
             protocol WithContext {
                 static func doSomething(_: Self, withContext: [Self])
                 static func doItAll(_: Self...)
+                static func aDifferentThing(something: Self)
             }
             """,
             expandedSource:
@@ -137,11 +138,13 @@ final class DualityTests: XCTestCase {
             protocol WithContext {
                 static func doSomething(_: Self, withContext: [Self])
                 static func doItAll(_: Self...)
+                static func aDifferentThing(something: Self)
             }
 
             protocol CoWithContext {
-                static func codoSomething() -> (Self, withContext: [Self])
-                static func codoItAll() -> [Self]
+                static func coDoSomething() -> (Self, withContext: [Self])
+                static func coDoItAll() -> [Self]
+                static func coADifferentThing() -> (something: Self)
             }
             """,
             macros: testMacros
