@@ -42,8 +42,9 @@ func dualize(
     let attrs = sourceProtocol.attributes.filter {
         $0 == .attribute(selfAttribute)
     }
+    let dualDeclName = TokenSyntax.identifier("Co" + sourceProtocol.name.text).with(\.leadingTrivia, " ")
     let dualDeclHeader: SyntaxNodeString =
-        "\(attrs)\(sourceProtocol.modifiers)protocol \(raw: "Co" + sourceProtocol.name.text)"
+        "\(attrs)\(sourceProtocol.modifiers)\(TokenSyntax.keyword(.protocol))\(dualDeclName)"
     return try! ProtocolDeclSyntax(dualDeclHeader) {
         for sourceMember in sourceProtocol.memberBlock.members {
             if let dualMember = dualize(member: sourceMember, inContext: context) {

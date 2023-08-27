@@ -56,8 +56,9 @@ func dualize(
         ) else {
             return nil
         }
+        let dualFunctionName = TokenSyntax.identifier("co" + sourceFunction.name.text).with(\.leadingTrivia, " ")
         let dualFunctionHeader: SyntaxNodeString =
-            "\(sourceFunction.attributes)\(sourceFunction.modifiers)func \(raw: "co" + sourceFunction.name.text)\(dualSignature)"
+            "\(sourceFunction.attributes)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualFunctionName)\(dualSignature)"
         let dualFunction = try! FunctionDeclSyntax(dualFunctionHeader)
         return MemberBlockItemSyntax(decl: dualFunction)
     } else {
@@ -94,14 +95,17 @@ func dualize(
             FunctionParameterSyntax(firstName: dualParamLabel, type: dualParamType)
         }
     }
-    let dualReturns = if sourceParams.parameters.count == 1, sourceParams.parameters.first!.firstName == "_",
-                         sourceParams.parameters.first!.secondName == nil || sourceParams.parameters.first!.secondName == "_"
+    let dualReturns = if
+        sourceParams.parameters.count == 1,
+        sourceParams.parameters.first!.firstName.text == "_",
+        sourceParams.parameters.first!.secondName == nil ||
+        sourceParams.parameters.first!.secondName?.text == "_"
     {
         ReturnClauseSyntax(type: sourceParams.parameters.first!.type)
     } else {
         ReturnClauseSyntax(type: TupleTypeSyntax(elements: TupleTypeElementListSyntax {
             for sourceParam in sourceParams.parameters {
-                let (dualReturnLabel, colon): (TokenSyntax?, TokenSyntax?) = if sourceParam.firstName == "_" {
+                let (dualReturnLabel, colon): (TokenSyntax?, TokenSyntax?) = if sourceParam.firstName.text == "_" {
                     (nil, nil)
                 } else {
                     (sourceParam.firstName, .colonToken())

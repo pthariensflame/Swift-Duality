@@ -71,6 +71,58 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+
+        assertMacroExpansion(
+            """
+            @Dualize
+            protocol Tape {
+                static func split() -> (left: Self, Int, right: Self)
+            }
+            """,
+            expandedSource:
+            """
+            protocol Tape {
+                static func split() -> (left: Self, Int, right: Self)
+            }
+
+            protocol CoTape {
+                static func cosplit(left: Self, _: Int, right: Self) -> ()
+            }
+            """,
+            macros: testMacros
+        )
+
+        assertMacroExpansion(
+            """
+            @Dualize
+            protocol Ring {
+                static func zero() -> Self
+                static func one() -> Self
+                static func add(_: Self, _: Self) -> Self
+                static func multiply(_: Self, _: Self) -> Self
+                static func negate(_: Self) -> Self
+            }
+            """,
+            expandedSource:
+            """
+            protocol Ring {
+                static func zero() -> Self
+                static func one() -> Self
+                static func add(_: Self, _: Self) -> Self
+                static func multiply(_: Self, _: Self) -> Self
+                static func negate(_: Self) -> Self
+            }
+
+            protocol CoRing {
+                static func cozero(_: Self) -> ()
+                static func coone(_: Self) -> ()
+                static func coadd(_: Self) -> (Self, Self)
+                static func comultiply(_: Self) -> (Self, Self)
+                static func conegate(_: Self) -> Self
+            }
+            """,
+            macros: testMacros
+        )
 #else
         throw XCTSkip(
             "macros are only supported when running tests for the host platform"
