@@ -95,16 +95,24 @@ func dualize(
             FunctionParameterSyntax(firstName: dualParamLabel, type: dualParamType)
         }
     }
+    let sourceParamsNoVariadics = sourceParams.parameters.map { sourceParam in
+        let dualReturnType = if sourceParam.ellipsis == nil {
+            sourceParam.type
+        } else {
+            TypeSyntax(ArrayTypeSyntax(element: sourceParam.type))
+        }
+        return sourceParam.with(\.ellipsis, nil).with(\.type, dualReturnType)
+    }
     let dualReturns = if
-        sourceParams.parameters.count == 1,
-        sourceParams.parameters.first!.firstName.text == "_",
-        sourceParams.parameters.first!.secondName == nil ||
-        sourceParams.parameters.first!.secondName?.text == "_"
+        sourceParamsNoVariadics.count == 1,
+        sourceParamsNoVariadics.first!.firstName.text == "_",
+        sourceParamsNoVariadics.first!.secondName == nil ||
+        sourceParamsNoVariadics.first!.secondName?.text == "_"
     {
-        ReturnClauseSyntax(type: sourceParams.parameters.first!.type)
+        ReturnClauseSyntax(type: sourceParamsNoVariadics.first!.type)
     } else {
         ReturnClauseSyntax(type: TupleTypeSyntax(elements: TupleTypeElementListSyntax {
-            for sourceParam in sourceParams.parameters {
+            for sourceParam in sourceParamsNoVariadics {
                 let (dualReturnLabel, colon): (TokenSyntax?, TokenSyntax?) = if sourceParam.firstName.text == "_" {
                     (nil, nil)
                 } else {

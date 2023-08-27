@@ -123,6 +123,29 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+
+        assertMacroExpansion(
+            """
+            @Dualize
+            protocol WithContext {
+                static func doSomething(_: Self, withContext: [Self])
+                static func doItAll(_: Self...)
+            }
+            """,
+            expandedSource:
+            """
+            protocol WithContext {
+                static func doSomething(_: Self, withContext: [Self])
+                static func doItAll(_: Self...)
+            }
+
+            protocol CoWithContext {
+                static func codoSomething() -> (Self, withContext: [Self])
+                static func codoItAll() -> [Self]
+            }
+            """,
+            macros: testMacros
+        )
 #else
         throw XCTSkip(
             "macros are only supported when running tests for the host platform"
