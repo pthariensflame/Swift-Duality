@@ -19,18 +19,18 @@ final class DualityTests: XCTestCase {
             @Dualize
             protocol Monoid {
               static func empty() -> Self
-              static func combine(_: (Self, Self)) -> Self
+              static func combine() -> Self
             }
             """,
             expandedSource:
             """
             protocol Monoid {
               static func empty() -> Self
-              static func combine(_: (Self, Self)) -> Self
+              static func combine(left: Self, right: Self) -> Self
             }
             protocol CoMonoid {
               static func coempty(_: Self)
-              static func cocombine(_: Self) -> (Self, Self)
+              static func cocombine(_: Self) -> (left: Self, right: Self)
             }
             """,
             macros: testMacros
