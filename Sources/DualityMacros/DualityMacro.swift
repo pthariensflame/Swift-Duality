@@ -83,7 +83,7 @@ public struct DualizeMacro: PeerMacro {
             return []
         }
         let dualNameRaw = node.arguments?
-            .as(LabeledExprListSyntax.self)?
+            .cast(LabeledExprListSyntax.self)
             .first?
             .expression
             .as(StringLiteralExprSyntax.self)?
