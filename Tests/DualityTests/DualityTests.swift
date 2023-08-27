@@ -39,7 +39,7 @@ final class DualityStaticFuncTests: XCTestCase {
 #if canImport(DualityMacros)
         assertMacroExpansion(
             """
-            @Dualize("Two")
+            @Dualize(dualName: "Two")
             protocol One {}
             """,
             expandedSource:
