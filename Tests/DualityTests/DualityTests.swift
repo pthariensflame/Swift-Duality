@@ -35,6 +35,29 @@ final class DualityStaticFuncTests: XCTestCase {
 #endif
     }
 
+    func testDualizeRenamed() throws {
+#if canImport(DualityMacros)
+        assertMacroExpansion(
+            """
+            @Dualize("Two")
+            protocol One {}
+            """,
+            expandedSource:
+            """
+            protocol One {}
+
+            protocol Two {
+            }
+            """,
+            macros: testMacros
+        )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
+
     func testDualizePointed() throws {
 #if canImport(DualityMacros)
         assertMacroExpansion(
