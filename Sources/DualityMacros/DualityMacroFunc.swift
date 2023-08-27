@@ -32,6 +32,24 @@ func dualize(
         let withSelf = !sourceFunction.modifiers.contains {
             $0.name.tokenKind == .keyword(.static)
         }
+        guard !withSelf else {
+            // TODO: implement withSelf handling
+            var modifiersWithStatic = [DeclModifierSyntax(name: "static")]
+            modifiersWithStatic.append(contentsOf: sourceFunction.modifiers)
+            context.diagnose(Diagnostic(
+                node: sourceFunction,
+                message: NonStaticMemberDiagnosticMessage.singleton,
+                highlights: [Syntax(sourceFunction.modifiers)],
+                fixIt: FixIt(
+                    message: NonStaticMemberDiagnosticMessage.FixMessage.singleton,
+                    changes: [FixIt.Change.replace(
+                        oldNode: Syntax(sourceFunction),
+                        newNode: Syntax(sourceFunction.with(\.modifiers, DeclModifierListSyntax(modifiersWithStatic)))
+                    )]
+                )
+            ))
+            return nil
+        }
         guard let dualSignature = dualize(
             functionSignature: sourceFunction.signature,
             withSelf: withSelf,
@@ -70,18 +88,47 @@ func dualize(
 
 func dualize(
     parameterList sourceParams: FunctionParameterClauseSyntax,
-    withSelf: Bool,
-    inContext context: some MacroExpansionContext
-) -> ReturnClauseSyntax? {
-    fatalError() // TODO:
-}
-
-func dualize(
     returnValue sourceReturns: ReturnClauseSyntax?,
     withSelf: Bool,
     inContext context: some MacroExpansionContext
-) -> FunctionParameterClauseSyntax {
-    fatalError() // TODO:
+) -> (
+    dualParams: FunctionParameterClauseSyntax,
+    dualReturns: ReturnClauseSyntax?
+)? {
+    assert(!withSelf) // TODO: implement withSelf handing
+    let sourceReturnsType = sourceReturns?.type ?? TypeSyntax(TupleTypeSyntax(elements: []))
+    var dualParamsMap: [(TokenSyntax, TokenSyntax, TypeSyntax)] = []
+    if let sourceReturnsTuple = sourceReturnsType.as(TupleTypeSyntax.self) {
+        for sourceReturnElem in sourceReturnsTuple.elements {
+            let dualParamLabel = sourceReturnElem.firstName ?? "_"
+            let dualParamName = sourceReturnElem.secondName ?? context.makeUniqueName(dualParamLabel.text)
+            dualParamsMap.append((dualParamLabel, dualParamName, sourceReturnElem.type))
+        }
+    } else {
+        dualParamsMap.append(("_", context.makeUniqueName("_"), sourceReturnsType))
+    }
+    let dualParams = FunctionParameterClauseSyntax {
+        for (dualParamLabel, dualParamName, dualParamType) in dualParamsMap {
+            FunctionParameterSyntax(firstName: dualParamLabel, secondName: dualParamName, type: dualParamType)
+        }
+    }
+    let dualReturns = if sourceParams.parameters.count == 1, sourceParams.parameters.first!.firstName == "_",
+                         sourceParams.parameters.first!.secondName == nil || sourceParams.parameters.first!.secondName == "_"
+    {
+        ReturnClauseSyntax(type: sourceParams.parameters.first!.type)
+    } else {
+        ReturnClauseSyntax(type: TupleTypeSyntax(elements: TupleTypeElementListSyntax {
+            for sourceParam in sourceParams.parameters {
+                let dualReturnLabel: TokenSyntax? = if sourceParam.firstName == "_" {
+                    nil
+                } else {
+                    sourceParam.firstName
+                }
+                TupleTypeElementSyntax(firstName: dualReturnLabel, type: sourceParam.type)
+            }
+        }))
+    }
+    return (dualParams, dualReturns)
 }
 
 func dualize(
@@ -89,6 +136,7 @@ func dualize(
     withSelf: Bool,
     inContext context: some MacroExpansionContext
 ) -> FunctionSignatureSyntax? {
+    assert(!withSelf) // TODO: implement withSelf handing
     guard sourceSignature.effectSpecifiers == nil else {
         context.diagnose(Diagnostic(
             node: sourceSignature,
@@ -104,16 +152,13 @@ func dualize(
         ))
         return nil
     }
-    return FunctionSignatureSyntax(
-        parameterClause: dualize(
-            returnValue: sourceSignature.returnClause,
-            withSelf: withSelf,
-            inContext: context
-        ),
-        returnClause: dualize(
-            parameterList: sourceSignature.parameterClause,
-            withSelf: withSelf,
-            inContext: context
-        )
-    )
+    guard let (dualParams, dualReturns) = dualize(
+        parameterList: sourceSignature.parameterClause,
+        returnValue: sourceSignature.returnClause,
+        withSelf: withSelf,
+        inContext: context
+    ) else {
+        return nil
+    }
+    return FunctionSignatureSyntax(parameterClause: dualParams, returnClause: dualReturns)
 }

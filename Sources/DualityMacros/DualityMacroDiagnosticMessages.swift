@@ -146,6 +146,38 @@ public struct EffectSpecifiersDiagnosticMessage: DiagnosticMessage {
     }
 }
 
+public struct NonStaticMemberDiagnosticMessage: DiagnosticMessage {
+    private init() {}
+    
+    public static let singleton: Self = .init()
+    
+    public var message: String {
+        "Protocol members that are not static are not supported"
+    }
+    
+    public var diagnosticID: MessageID {
+        MessageID(domain: "DualityMacros", id: "NonStaticMember")
+    }
+    
+    public var severity: DiagnosticSeverity {
+        .error
+    }
+    
+    public struct FixMessage: FixItMessage {
+        private init() {}
+        
+        public static let singleton: Self = .init()
+        
+        public var message: String {
+            "Add the static modifier"
+        }
+        
+        public var fixItID: MessageID {
+            MessageID(domain: "DualityMacros", id: "NonStaticMemberFix")
+        }
+    }
+}
+
 public struct UnsupportedMemberKindDiagnosticMessage: DiagnosticMessage {
     private init() {}
     
