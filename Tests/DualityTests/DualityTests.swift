@@ -11,8 +11,8 @@ let testMacros: [String: Macro.Type] = [
 ]
 #endif
 
-final class DualityTests: XCTestCase {
-    func testDualizeMacro() throws {
+final class DualityStaticFuncTests: XCTestCase {
+    func testDualizeEmpty() throws {
 #if canImport(DualityMacros)
         assertMacroExpansion(
             """
@@ -28,7 +28,15 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 
+    func testDualizePointed() throws {
+#if canImport(DualityMacros)
         assertMacroExpansion(
             """
             @Dualize
@@ -48,7 +56,15 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 
+    func testDualizeMonoid() throws {
+#if canImport(DualityMacros)
         assertMacroExpansion(
             """
             @Dualize
@@ -71,7 +87,15 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 
+    func testDualizeTape() throws {
+#if canImport(DualityMacros)
         assertMacroExpansion(
             """
             @Dualize
@@ -91,7 +115,15 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 
+    func testDualizeRing() throws {
+#if canImport(DualityMacros)
         assertMacroExpansion(
             """
             @Dualize
@@ -123,11 +155,19 @@ final class DualityTests: XCTestCase {
             """,
             macros: testMacros
         )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 
+    func testDualizeAssorted() throws {
+#if canImport(DualityMacros)
         assertMacroExpansion(
             """
             @Dualize
-            protocol WithContext {
+            protocol Assorted {
                 static func doSomething(_: Self, withContext: [Self])
                 static func doItAll(_: Self...)
                 static func aDifferentThing(something: Self)
@@ -135,13 +175,13 @@ final class DualityTests: XCTestCase {
             """,
             expandedSource:
             """
-            protocol WithContext {
+            protocol Assorted {
                 static func doSomething(_: Self, withContext: [Self])
                 static func doItAll(_: Self...)
                 static func aDifferentThing(something: Self)
             }
 
-            protocol CoWithContext {
+            protocol CoAssorted {
                 static func coDoSomething() -> (Self, withContext: [Self])
                 static func coDoItAll() -> [Self]
                 static func coADifferentThing() -> Self

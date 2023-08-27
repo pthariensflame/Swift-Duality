@@ -169,12 +169,30 @@ public struct NonStaticMemberDiagnosticMessage: DiagnosticMessage {
         public static let singleton: Self = .init()
         
         public var message: String {
-            "Add the static modifier"
+            "Add the static modifier and add an initial Self parameter"
         }
         
         public var fixItID: MessageID {
             MessageID(domain: "DualityMacros", id: "NonStaticMemberFix")
         }
+    }
+}
+
+public struct TypeAliasDiagnosticMessage: DiagnosticMessage {
+    private init() {}
+    
+    public static let singleton: Self = .init()
+    
+    public var message: String {
+        "Protocol members that are type aliases are not supported"
+    }
+    
+    public var diagnosticID: MessageID {
+        MessageID(domain: "DualityMacros", id: "TypeAlias")
+    }
+    
+    public var severity: DiagnosticSeverity {
+        .error
     }
 }
 
