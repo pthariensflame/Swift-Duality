@@ -5,7 +5,6 @@ import SwiftSyntaxMacros
 
 func dualize(
     member sourceMember: MemberBlockItemSyntax,
-    byWrapping existingMember: DeclReferenceExprSyntax? = nil,
     inContext context: some MacroExpansionContext
 ) -> MemberBlockItemSyntax? {
     if let sourceFunction = sourceMember.decl.as(FunctionDeclSyntax.self) {
@@ -58,24 +57,8 @@ func dualize(
             return nil
         }
         let dualFunctionHeader: SyntaxNodeString =
-            """
-            \(sourceFunction.attributes)
-            \(sourceFunction.modifiers) func \(raw: "co" + sourceFunction.name.text)\(dualSignature)
-            """
-        let dualFunction = if let existingMember {
-            try! FunctionDeclSyntax(dualFunctionHeader) {
-                FunctionCallExprSyntax(callee: existingMember) {
-                    for param in dualSignature.parameterClause.parameters {
-                        LabeledExprSyntax(
-                            label: param.firstName,
-                            expression: DeclReferenceExprSyntax(baseName: param.secondName ?? param.firstName)
-                        )
-                    }
-                }
-            }
-        } else {
-            try! FunctionDeclSyntax(dualFunctionHeader)
-        }
+            "\(sourceFunction.attributes)\(sourceFunction.modifiers)func \(raw: "co" + sourceFunction.name.text)\(dualSignature)"
+        let dualFunction = try! FunctionDeclSyntax(dualFunctionHeader)
         return MemberBlockItemSyntax(decl: dualFunction)
     } else {
         context.diagnose(Diagnostic(
@@ -97,19 +80,18 @@ func dualize(
 )? {
     assert(!withSelf) // TODO: implement withSelf handing
     let sourceReturnsType = sourceReturns?.type ?? TypeSyntax(TupleTypeSyntax(elements: []))
-    var dualParamsMap: [(TokenSyntax, TokenSyntax, TypeSyntax)] = []
+    var dualParamsMap: [(TokenSyntax, TypeSyntax)] = []
     if let sourceReturnsTuple = sourceReturnsType.as(TupleTypeSyntax.self) {
         for sourceReturnElem in sourceReturnsTuple.elements {
             let dualParamLabel = sourceReturnElem.firstName ?? "_"
-            let dualParamName = sourceReturnElem.secondName ?? context.makeUniqueName(dualParamLabel.text)
-            dualParamsMap.append((dualParamLabel, dualParamName, sourceReturnElem.type))
+            dualParamsMap.append((dualParamLabel, sourceReturnElem.type))
         }
     } else {
-        dualParamsMap.append(("_", context.makeUniqueName("_"), sourceReturnsType))
+        dualParamsMap.append(("_", sourceReturnsType))
     }
     let dualParams = FunctionParameterClauseSyntax {
-        for (dualParamLabel, dualParamName, dualParamType) in dualParamsMap {
-            FunctionParameterSyntax(firstName: dualParamLabel, secondName: dualParamName, type: dualParamType)
+        for (dualParamLabel, dualParamType) in dualParamsMap {
+            FunctionParameterSyntax(firstName: dualParamLabel, type: dualParamType)
         }
     }
     let dualReturns = if sourceParams.parameters.count == 1, sourceParams.parameters.first!.firstName == "_",
@@ -119,12 +101,12 @@ func dualize(
     } else {
         ReturnClauseSyntax(type: TupleTypeSyntax(elements: TupleTypeElementListSyntax {
             for sourceParam in sourceParams.parameters {
-                let dualReturnLabel: TokenSyntax? = if sourceParam.firstName == "_" {
-                    nil
+                let (dualReturnLabel, colon): (TokenSyntax?, TokenSyntax?) = if sourceParam.firstName == "_" {
+                    (nil, nil)
                 } else {
-                    sourceParam.firstName
+                    (sourceParam.firstName, .colonToken())
                 }
-                TupleTypeElementSyntax(firstName: dualReturnLabel, type: sourceParam.type)
+                TupleTypeElementSyntax(firstName: dualReturnLabel, colon: colon, type: sourceParam.type)
             }
         }))
     }

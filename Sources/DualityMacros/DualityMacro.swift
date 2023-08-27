@@ -6,7 +6,8 @@ import SwiftSyntaxMacros
 
 func dualize(
     protocol sourceProtocol: ProtocolDeclSyntax,
-    inContext context: some MacroExpansionContext
+    inContext context: some MacroExpansionContext,
+    removingAttribute selfAttribute: AttributeSyntax
 ) -> ProtocolDeclSyntax? {
     guard sourceProtocol.inheritanceClause == nil else {
         context.diagnose(Diagnostic(
@@ -38,11 +39,11 @@ func dualize(
         ))
         return nil
     }
+    let attrs = sourceProtocol.attributes.filter {
+        $0 == .attribute(selfAttribute)
+    }
     let dualDeclHeader: SyntaxNodeString =
-        """
-        \(sourceProtocol.attributes)
-        \(sourceProtocol.modifiers) protocol \(raw: "Co" + sourceProtocol.name.text)
-        """
+        "\(attrs)\(sourceProtocol.modifiers)protocol \(raw: "Co" + sourceProtocol.name.text)"
     return try! ProtocolDeclSyntax(dualDeclHeader) {
         for sourceMember in sourceProtocol.memberBlock.members {
             if let dualMember = dualize(member: sourceMember, inContext: context) {
@@ -65,10 +66,14 @@ public struct DualizeMacro: PeerMacro {
             ))
             return []
         }
-        guard let dualProtocol = dualize(protocol: sourceProtocol, inContext: context) else {
+        guard let dualProtocol = dualize(
+            protocol: sourceProtocol,
+            inContext: context,
+            removingAttribute: node
+        ) else {
             return []
         }
-        return [DeclSyntax(dualProtocol)]
+        return [DeclSyntax(dualProtocol.formatted().cast(ProtocolDeclSyntax.self))]
     }
 }
 
