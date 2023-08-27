@@ -144,7 +144,7 @@ final class DualityTests: XCTestCase {
             protocol CoWithContext {
                 static func coDoSomething() -> (Self, withContext: [Self])
                 static func coDoItAll() -> [Self]
-                static func coADifferentThing() -> (something: Self)
+                static func coADifferentThing() -> Self
             }
             """,
             macros: testMacros

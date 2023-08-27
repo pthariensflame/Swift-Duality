@@ -104,12 +104,7 @@ func dualize(
         }
         return sourceParam.with(\.ellipsis, nil).with(\.type, dualReturnType)
     }
-    let dualReturns = if
-        sourceParamsNoVariadics.count == 1,
-        sourceParamsNoVariadics.first!.firstName.text == "_",
-        sourceParamsNoVariadics.first!.secondName == nil ||
-        sourceParamsNoVariadics.first!.secondName?.text == "_"
-    {
+    let dualReturns = if sourceParamsNoVariadics.count == 1 {
         ReturnClauseSyntax(type: sourceParamsNoVariadics.first!.type)
     } else {
         ReturnClauseSyntax(type: TupleTypeSyntax(elements: TupleTypeElementListSyntax {
