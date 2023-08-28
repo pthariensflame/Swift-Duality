@@ -1,6 +1,20 @@
 import SwiftDiagnostics
 import SwiftSyntax
 
+public struct GivenNameNotLiteralDiagnosticMessage: DiagnosticMessage {
+    public var message: String {
+        "The dual name given should be a string literal"
+    }
+    
+    public var diagnosticID: MessageID {
+        MessageID(domain: "DualityMacros", id: "GivenNameNotLiteral")
+    }
+    
+    public var severity: DiagnosticSeverity {
+        .error
+    }
+}
+
 public struct InvalidIdentifierDiagnosticMessage: DiagnosticMessage {
     public let ident: TokenSyntax
     

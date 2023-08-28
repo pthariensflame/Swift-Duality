@@ -229,4 +229,40 @@ final class DualityStaticFuncTests: XCTestCase {
         )
 #endif
     }
+    
+    func testDualizeRingAlt() throws {
+#if canImport(DualityMacros)
+        assertMacroExpansion(
+            """
+            @Dualize
+            protocol RingAlt {
+                @DualName("toBool")
+                static func fromBool(_: Bool) -> Self
+                static func combine(mode: Bool, _: Self, _: Self) -> Self
+                @DualName("negate")
+                static func negate(_: Self) -> Self
+            }
+            """,
+            expandedSource:
+            """
+            protocol RingAlt {
+                static func fromBool(_: Bool) -> Self
+                static func combine(mode: Bool, _: Self, _: Self) -> Self
+                static func negate(_: Self) -> Self
+            }
+
+            protocol CoRingAlt {
+                static func toBool(_: Self) -> Bool
+                static func coCombine(_: Self) -> (mode: Bool, Self, Self)
+                static func negate(_: Self) -> Self
+            }
+            """,
+            macros: testMacros
+        )
+#else
+        throw XCTSkip(
+            "macros are only supported when running tests for the host platform"
+        )
+#endif
+    }
 }

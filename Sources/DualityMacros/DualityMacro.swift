@@ -82,6 +82,21 @@ public struct DualizeMacro: PeerMacro {
             ))
             return []
         }
+        guard
+            node.arguments == nil ||
+            node.arguments!
+            .cast(LabeledExprListSyntax.self)
+            .first!
+            .expression
+            .is(StringLiteralExprSyntax.self)
+        else {
+            context.diagnose(Diagnostic(
+                node: node,
+                message: GivenNameNotLiteralDiagnosticMessage(),
+                highlights: [Syntax(node.arguments!)]
+            ))
+            return []
+        }
         let dualNameSyntax = node.arguments?
             .cast(LabeledExprListSyntax.self)
             .first?

@@ -27,14 +27,29 @@ func dualize(
             } else {
                 return false
             }
-        }) {
-            let dualNameSyn = dualNameAttr.cast(AttributeSyntax.self)
+        }).map({ $0.cast(AttributeSyntax.self) }) {
+            guard
+                dualNameAttr
                 .arguments!
                 .cast(LabeledExprListSyntax.self)
-                .first?
+                .first!
                 .expression
-                .as(StringLiteralExprSyntax.self)
-            (dualNameRaw, dualNameSyntax) = (dualNameSyn?.representedLiteralValue, dualNameSyn)
+                .is(StringLiteralExprSyntax.self)
+            else {
+                context.diagnose(Diagnostic(
+                    node: dualNameAttr,
+                    message: GivenNameNotLiteralDiagnosticMessage(),
+                    highlights: [Syntax(dualNameAttr.arguments!)]
+                ))
+                return nil
+            }
+            let dualNameSyn = dualNameAttr
+                .arguments!
+                .cast(LabeledExprListSyntax.self)
+                .first!
+                .expression
+                .cast(StringLiteralExprSyntax.self)
+            (dualNameRaw, dualNameSyntax) = (dualNameSyn.representedLiteralValue, dualNameSyn)
         } else {
             (dualNameRaw, dualNameSyntax) = (nil, nil)
         }
