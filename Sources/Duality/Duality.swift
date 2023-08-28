@@ -1,4 +1,4 @@
-@attached(peer, names: prefixed(Co))
+@attached(peer, names: prefixed(Co), arbitrary)
 public macro Dualize<T>(dualName: String? = nil) = #externalMacro(module: "DualityMacros", type: "DualizeMacro")
 
 // @attached(extension, names: prefixed(co))

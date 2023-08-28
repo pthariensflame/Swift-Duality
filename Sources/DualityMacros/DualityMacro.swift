@@ -13,10 +13,10 @@ func dualize(
     guard sourceProtocol.inheritanceClause == nil else {
         context.diagnose(Diagnostic(
             node: sourceProtocol,
-            message: ProtocolInheritanceDiagnosticMessage.singleton,
+            message: ProtocolInheritanceDiagnosticMessage(),
             highlights: [Syntax(sourceProtocol.inheritanceClause!)],
             fixIt: FixIt(
-                message: ProtocolInheritanceDiagnosticMessage.FixMessage.singleton,
+                message: ProtocolInheritanceDiagnosticMessage.FixMessage(),
                 changes: [
                     FixIt.Change.replace(
                         oldNode: Syntax(sourceProtocol),
@@ -30,10 +30,10 @@ func dualize(
     guard sourceProtocol.primaryAssociatedTypeClause == nil else {
         context.diagnose(Diagnostic(
             node: sourceProtocol,
-            message: PrimaryAssociatedTypesDiagnosticMessage.singleton,
+            message: PrimaryAssociatedTypesDiagnosticMessage(),
             highlights: [Syntax(sourceProtocol.primaryAssociatedTypeClause!)],
             fixIt: FixIt(
-                message: PrimaryAssociatedTypesDiagnosticMessage.FixMessage.singleton,
+                message: PrimaryAssociatedTypesDiagnosticMessage.FixMessage(),
                 changes: [
                     FixIt.Change.replace(
                         oldNode: Syntax(sourceProtocol),
@@ -74,24 +74,31 @@ public struct DualizeMacro: PeerMacro {
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
+    ) -> [DeclSyntax] {
         guard let sourceProtocol = declaration.as(ProtocolDeclSyntax.self) else {
             context.diagnose(Diagnostic(
                 node: declaration,
-                message: NotAProtocolDiagnosticMessage.singleton
+                message: NotAProtocolDiagnosticMessage()
             ))
             return []
         }
-        let dualNameRaw = node.arguments?
+        let dualNameSyntax = node.arguments?
             .cast(LabeledExprListSyntax.self)
             .first?
             .expression
-            .as(StringLiteralExprSyntax.self)?
-            .representedLiteralValue
-        let dualName = TokenSyntax.identifier(dualNameRaw ?? "Co" + sourceProtocol.name.text)
-        guard let dualProtocol = try dualize(
+            .as(StringLiteralExprSyntax.self)
+        let dualNameRaw = dualNameSyntax?.representedLiteralValue
+        let dualNameUnvalidated = TokenSyntax.identifier(dualNameRaw ?? "Co" + sourceProtocol.name.text)
+        guard let dualName = try? TokenSyntax(validating: dualNameUnvalidated.with(\.leadingTrivia, " ")) else {
+            context.diagnose(Diagnostic(
+                node: dualNameSyntax.map(Syntax.init) ?? Syntax(sourceProtocol.name),
+                message: InvalidIdentifierDiagnosticMessage(ident: dualNameUnvalidated)
+            ))
+            return []
+        }
+        guard let dualProtocol = dualize(
             protocol: sourceProtocol,
-            as: TokenSyntax(validating: dualName.with(\.leadingTrivia, " ")),
+            as: dualName,
             inContext: context,
             removingAttribute: node
         ) else {

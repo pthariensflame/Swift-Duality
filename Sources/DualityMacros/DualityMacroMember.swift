@@ -18,8 +18,37 @@ func dualize(
     inContext context: some MacroExpansionContext
 ) -> MemberBlockItemSyntax? {
     if let sourceFunction = sourceMember.decl.as(FunctionDeclSyntax.self) {
+        let (dualNameRaw, dualNameSyntax): (String?, StringLiteralExprSyntax?)
+        if let dualNameAttr = sourceFunction.attributes.first(where: {
+            if let attr = $0.as(AttributeSyntax.self),
+               let attrName = attr.attributeName.as(IdentifierTypeSyntax.self)
+            {
+                return attrName.name.text == "DualName"
+            } else {
+                return false
+            }
+        }) {
+            let dualNameSyn = dualNameAttr.cast(AttributeSyntax.self)
+                .arguments!
+                .cast(LabeledExprListSyntax.self)
+                .first?
+                .expression
+                .as(StringLiteralExprSyntax.self)
+            (dualNameRaw, dualNameSyntax) = (dualNameSyn?.representedLiteralValue, dualNameSyn)
+        } else {
+            (dualNameRaw, dualNameSyntax) = (nil, nil)
+        }
+        let dualNameUnvalidated = TokenSyntax.identifier(dualNameRaw ?? "co" + makeInitialCaps(sourceFunction.name.text))
+        guard let dualName = try? TokenSyntax(validating: dualNameUnvalidated.with(\.leadingTrivia, " ")) else {
+            context.diagnose(Diagnostic(
+                node: dualNameSyntax.map(Syntax.init) ?? Syntax(sourceFunction.name),
+                message: InvalidIdentifierDiagnosticMessage(ident: dualNameUnvalidated)
+            ))
+            return nil
+        }
         guard let dualFunction = dualize(
             function: sourceFunction,
+            as: dualName,
             inContext: context
         ) else {
             return nil
@@ -28,7 +57,7 @@ func dualize(
     } else {
         context.diagnose(Diagnostic(
             node: sourceMember,
-            message: UnsupportedMemberKindDiagnosticMessage.singleton
+            message: UnsupportedMemberKindDiagnosticMessage()
         ))
         return nil
     }

@@ -62,10 +62,10 @@ func dualize(
     guard sourceSignature.effectSpecifiers == nil else {
         context.diagnose(Diagnostic(
             node: sourceSignature,
-            message: EffectSpecifiersDiagnosticMessage.singleton,
+            message: EffectSpecifiersDiagnosticMessage(),
             highlights: [Syntax(sourceSignature.effectSpecifiers!)],
             fixIt: FixIt(
-                message: EffectSpecifiersDiagnosticMessage.FixMessage.singleton,
+                message: EffectSpecifiersDiagnosticMessage.FixMessage(),
                 changes: [
                     FixIt.Change.replace(
                         oldNode: Syntax(sourceSignature),
@@ -89,6 +89,7 @@ func dualize(
 
 func dualize(
     function sourceFunction: FunctionDeclSyntax,
+    as dualName: TokenSyntax,
     inContext context: some MacroExpansionContext
 ) -> FunctionDeclSyntax? {
     let mutatingKeyword = sourceFunction.modifiers.first {
@@ -97,10 +98,10 @@ func dualize(
     guard mutatingKeyword == nil else {
         context.diagnose(Diagnostic(
             node: sourceFunction,
-            message: MutatingMemberDiagnosticMessage.singleton,
+            message: MutatingMemberDiagnosticMessage(),
             highlights: [Syntax(mutatingKeyword!)],
             fixIt: FixIt(
-                message: MutatingMemberDiagnosticMessage.FixMessage.singleton,
+                message: MutatingMemberDiagnosticMessage.FixMessage(),
                 changes: [
                     FixIt.Change.replace(
                         oldNode: Syntax(sourceFunction),
@@ -127,10 +128,10 @@ func dualize(
         paramsWithSelf.append(contentsOf: sourceFunction.signature.parameterClause.parameters)
         context.diagnose(Diagnostic(
             node: sourceFunction,
-            message: NonStaticMemberDiagnosticMessage.singleton,
+            message: NonStaticMemberDiagnosticMessage(),
             highlights: [Syntax(sourceFunction.modifiers)],
             fixIt: FixIt(
-                message: NonStaticMemberDiagnosticMessage.FixMessage.singleton,
+                message: NonStaticMemberDiagnosticMessage.FixMessage(),
                 changes: [
                     FixIt.Change.replace(
                         oldNode: Syntax(sourceFunction),
@@ -158,9 +159,7 @@ func dualize(
     ) else {
         return nil
     }
-    let initialCapsFunctionNameText = makeInitialCaps(sourceFunction.name.text)
-    let dualFunctionName = TokenSyntax.identifier("co" + initialCapsFunctionNameText).with(\.leadingTrivia, " ")
     let dualFunctionHeader: SyntaxNodeString =
-        "\(sourceFunction.attributes)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualFunctionName)\(dualSignature)"
+        "\(sourceFunction.attributes)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualName)\(dualSignature)"
     return try! FunctionDeclSyntax(dualFunctionHeader)
 }

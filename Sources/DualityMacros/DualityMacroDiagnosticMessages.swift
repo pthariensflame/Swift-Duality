@@ -1,10 +1,23 @@
 import SwiftDiagnostics
+import SwiftSyntax
+
+public struct InvalidIdentifierDiagnosticMessage: DiagnosticMessage {
+    public let ident: TokenSyntax
+    
+    public var message: String {
+        "The string \"\(ident)\" is invalid as an identifier"
+    }
+    
+    public var diagnosticID: MessageID {
+        MessageID(domain: "DualityMacros", id: "NotAProtocol")
+    }
+    
+    public var severity: DiagnosticSeverity {
+        .error
+    }
+}
 
 public struct NotAProtocolDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Dualization can only be applied to protocols"
     }
@@ -19,10 +32,6 @@ public struct NotAProtocolDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct ProtocolInheritanceDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Protocols with inheritance clauses are not yet supported"
     }
@@ -36,10 +45,6 @@ public struct ProtocolInheritanceDiagnosticMessage: DiagnosticMessage {
     }
     
     public struct FixMessage: FixItMessage {
-        private init() {}
-        
-        public static let singleton: Self = .init()
-        
         public var message: String {
             "Remove the inheritence clause"
         }
@@ -51,10 +56,6 @@ public struct ProtocolInheritanceDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct PrimaryAssociatedTypesDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Protocols with primary associated types are not yet supported"
     }
@@ -68,10 +69,6 @@ public struct PrimaryAssociatedTypesDiagnosticMessage: DiagnosticMessage {
     }
     
     public struct FixMessage: FixItMessage {
-        private init() {}
-        
-        public static let singleton: Self = .init()
-        
         public var message: String {
             "Remove the primary associated types"
         }
@@ -83,10 +80,6 @@ public struct PrimaryAssociatedTypesDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct MutatingMemberDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Mutating protocol members are not yet supported"
     }
@@ -100,10 +93,6 @@ public struct MutatingMemberDiagnosticMessage: DiagnosticMessage {
     }
     
     public struct FixMessage: FixItMessage {
-        private init() {}
-        
-        public static let singleton: Self = .init()
-        
         public var message: String {
             "Remove the mutating modifier"
         }
@@ -115,10 +104,6 @@ public struct MutatingMemberDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct EffectSpecifiersDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Protocol members with effect specifiers are not yet supported"
     }
@@ -132,10 +117,6 @@ public struct EffectSpecifiersDiagnosticMessage: DiagnosticMessage {
     }
     
     public struct FixMessage: FixItMessage {
-        private init() {}
-        
-        public static let singleton: Self = .init()
-        
         public var message: String {
             "Remove the effect specifiers"
         }
@@ -147,10 +128,6 @@ public struct EffectSpecifiersDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct NonStaticMemberDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Protocol members that are not static are not supported"
     }
@@ -164,10 +141,6 @@ public struct NonStaticMemberDiagnosticMessage: DiagnosticMessage {
     }
     
     public struct FixMessage: FixItMessage {
-        private init() {}
-        
-        public static let singleton: Self = .init()
-        
         public var message: String {
             "Add the static modifier and add an initial Self parameter"
         }
@@ -179,10 +152,6 @@ public struct NonStaticMemberDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct TypeAliasDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "Protocol members that are type aliases are not supported"
     }
@@ -197,10 +166,6 @@ public struct TypeAliasDiagnosticMessage: DiagnosticMessage {
 }
 
 public struct UnsupportedMemberKindDiagnosticMessage: DiagnosticMessage {
-    private init() {}
-    
-    public static let singleton: Self = .init()
-    
     public var message: String {
         "This kind of protocol member is not yet supported"
     }

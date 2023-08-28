@@ -6,8 +6,13 @@ import XCTest
 import DualityMacros
 
 let testMacros: [String: Macro.Type] = [
-    "Dualize": DualizeMacro.self
+    "Dualize": DualizeMacro.self,
     // "SelfDual": SelfDualMacro.self,
+    "Coinit": TrivialMacro.self,
+    "Covar": TrivialMacro.self,
+    "Cosubscript": TrivialMacro.self,
+    "Coinstance": TrivialMacro.self,
+    "DualName": TrivialMacro.self
 ]
 #endif
 
@@ -40,13 +45,19 @@ final class DualityStaticFuncTests: XCTestCase {
         assertMacroExpansion(
             """
             @Dualize(dualName: "Two")
-            protocol One {}
+            protocol One {
+                @DualName("two")
+                static func one()
+            }
             """,
             expandedSource:
             """
-            protocol One {}
+            protocol One {
+                static func one()
+            }
 
             protocol Two {
+                static func two() -> ()
             }
             """,
             macros: testMacros
