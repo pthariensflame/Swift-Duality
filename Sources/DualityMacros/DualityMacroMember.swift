@@ -19,7 +19,7 @@ func dualize(
 ) -> MemberBlockItemSyntax? {
     if let sourceFunction = sourceMember.decl.as(FunctionDeclSyntax.self) {
         let (dualNameRaw, dualNameSyntax): (String?, StringLiteralExprSyntax?)
-        if let dualNameAttr = sourceFunction.attributes.first(where: {
+        let dualNameAttrMaybe = sourceFunction.attributes.first(where: {
             if let attr = $0.as(AttributeSyntax.self),
                let attrName = attr.attributeName.as(IdentifierTypeSyntax.self)
             {
@@ -27,7 +27,8 @@ func dualize(
             } else {
                 return false
             }
-        }).map({ $0.cast(AttributeSyntax.self) }) {
+        }).map { $0.cast(AttributeSyntax.self) }
+        if let dualNameAttr = dualNameAttrMaybe {
             guard
                 dualNameAttr
                 .arguments!
@@ -64,7 +65,8 @@ func dualize(
         guard let dualFunction = dualize(
             function: sourceFunction,
             as: dualName,
-            inContext: context
+            inContext: context,
+            removingAttributes: dualNameAttrMaybe.map { [$0] } ?? []
         ) else {
             return nil
         }

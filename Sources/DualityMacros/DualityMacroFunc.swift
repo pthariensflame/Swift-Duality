@@ -90,8 +90,14 @@ func dualize(
 func dualize(
     function sourceFunction: FunctionDeclSyntax,
     as dualName: TokenSyntax,
-    inContext context: some MacroExpansionContext
+    inContext context: some MacroExpansionContext,
+    removingAttributes attrsToRemove: [AttributeSyntax]
 ) -> FunctionDeclSyntax? {
+    let sourceAttrs = sourceFunction.attributes.filter { sourceAttr in
+        !attrsToRemove.contains { attrToRemove in
+            sourceAttr.as(AttributeSyntax.self) == attrToRemove
+        }
+    }
     let mutatingKeyword = sourceFunction.modifiers.first {
         $0.name.tokenKind == .keyword(.mutating)
     }
@@ -160,6 +166,6 @@ func dualize(
         return nil
     }
     let dualFunctionHeader: SyntaxNodeString =
-        "\(sourceFunction.attributes)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualName)\(dualSignature)"
+        "\(sourceAttrs)\(sourceFunction.modifiers)\(TokenSyntax.keyword(.func))\(dualName)\(dualSignature)"
     return try! FunctionDeclSyntax(dualFunctionHeader)
 }
